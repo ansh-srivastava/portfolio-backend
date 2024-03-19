@@ -1,14 +1,14 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
-const cors = require('cors'); // Import cors module
-const nodemail = require('nodemailer')
+const cors = require('cors');
+const nodemailer = require('nodemailer');
 
 const app = express();
 
 // Middleware
 app.use(bodyParser.json());
-app.use(cors()); // Use cors middleware
+app.use(cors());
 
 // Connect to MongoDB
 mongoose.connect('mongodb+srv://anshsrivastava0987:akLSLhb9Qcs2JSUs@contactlivetest.lztdmer.mongodb.net/?retryWrites=true&w=majority&appName=ContactLiveTest', { useNewUrlParser: true, useUnifiedTopology: true });
@@ -32,23 +32,16 @@ app.post('/contact', async (req, res) => {
     const { name, email, phone, message } = req.body;
     const newContact = new Contact({ name, email, phone, message });
     await newContact.save();
-    res.status(201).json({ message: 'Form submitted successfully' });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
-});
 
-app.post('/sendEmail', async(req,res)  => { 
-    try{
-    const { name, email } = req.body;
-    const transporter = nodemail.createTransport({
-        service: "gmail",
-        auth:{
-            user:'ansh.srivastava0987@gmail.com',
-            pass:'icmlcwgrjxbcwcsa'
-        }
-    })
+    // Send email
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: 'ansh.srivastava0987@gmail.com',
+        pass: 'icmlcwgrjxbcwcsa'
+      }
+    });
+
     const emailTemplate = `<!DOCTYPE html>
     <html lang="en">
       <head>
@@ -153,7 +146,7 @@ app.post('/sendEmail', async(req,res)  => {
     
             <hr />
     
-            <div style="display: flex; justify-content: center; align-items: center; text-align: center; margin-right: 5rem; ">
+            <div style="display: flex; justify-content: center; align-items: center; text-align: center; margin-left: 5rem; ">
             <p style="font-size: 0.75rem; line-height: 1rem; ">Best regards</p>
             <p style="font-size: 0.75rem; line-height: 1rem; text-align: center;">Ansh Srivastava</p>
         </div>
@@ -162,29 +155,22 @@ app.post('/sendEmail', async(req,res)  => {
         </div>
       </body>
     </html>`;
-    
 
     const mailOptions = {
-        from: 'Ansh Srivastava <ansh.srivastava0987@gmail>',
-        to: `${email}`,
-        subject:'Thanks for Reaching out',
-        html: emailTemplate
-    }
+      from: 'Ansh Srivastava <ansh.srivastava0987@gmail.com>',
+      to: email,
+      subject: 'Thanks for Reaching out',
+      html: emailTemplate
+    };
 
-    await transporter.sendMail(mailOptions)
+    await transporter.sendMail(mailOptions);
 
-    res.status(200).json({
-        message:'Email sent successfully'
-    })
-}
-
-catch(err){
-    res.status(500).json({
-        error:'Error sending Mail'
-    })
-}
-
-})
+    res.status(201).json({ message: 'Form submitted successfully and email sent' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
 
 // Start server
 const PORT = process.env.PORT || 3001;
